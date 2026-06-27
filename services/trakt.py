@@ -9,7 +9,6 @@ TRAKT_HEADERS = {
     "trakt-api-key": TRAKT_CLIENT_ID
 }
 
-# الدالة المعدلة: ترجع الآن كلاً من الصورة المصغرة والصورة عالية الدقة
 def get_images_for_imdb_id(imdb_id, title):
     default_poster = "https://via.placeholder.com/200x300/151a22/8b9bb4?text=No+Poster"
     default_backdrop = "https://via.placeholder.com/1280x720/151a22/8b9bb4?text=No+Backdrop"
@@ -27,9 +26,9 @@ def get_images_for_imdb_id(imdb_id, title):
         
     return {"poster": default_poster, "backdrop": default_backdrop}
 
-@lru_cache(maxsize=50)
-def get_trakt_trending(media_type='movies'):
-    url = f"https://api.trakt.tv/{media_type}/trending?limit=12&extended=full"
+@lru_cache(maxsize=200)
+def get_trakt_trending(media_type='movies', page=1):
+    url = f"https://api.trakt.tv/{media_type}/trending?limit=15&page={page}&extended=full"
     try:
         resp = requests.get(url, headers=TRAKT_HEADERS, timeout=10)
         data = resp.json()
@@ -53,9 +52,9 @@ def get_trakt_trending(media_type='movies'):
             items.append({
                 "id": imdb_id,
                 "title": title,
-                "year": str(year) if year else '',
+                "year": str(year) if year else '0',
                 "poster": images['poster'],
-                "backdrop": images['backdrop'],  # الإضافة الجديدة
+                "backdrop": images['backdrop'],
                 "type": 'movie' if media_type == 'movies' else 'tv',
                 "plot": plot
             })
@@ -65,9 +64,9 @@ def get_trakt_trending(media_type='movies'):
         print(f"Trakt trending error: {e}")
         return []
 
-@lru_cache(maxsize=50)
-def get_trakt_genre(genre, media_type='movies'):
-    url = f"https://api.trakt.tv/{media_type}/popular?limit=15&genres={genre}&extended=full"
+@lru_cache(maxsize=200)
+def get_trakt_genre(genre, media_type='movies', page=1):
+    url = f"https://api.trakt.tv/{media_type}/popular?limit=15&page={page}&genres={genre}&extended=full"
     try:
         resp = requests.get(url, headers=TRAKT_HEADERS, timeout=10)
         data = resp.json()
@@ -87,9 +86,9 @@ def get_trakt_genre(genre, media_type='movies'):
             items.append({
                 "id": imdb_id,
                 "title": title,
-                "year": str(year) if year else '',
+                "year": str(year) if year else '0',
                 "poster": images['poster'],
-                "backdrop": images['backdrop'],  # الإضافة الجديدة
+                "backdrop": images['backdrop'],
                 "type": 'movie' if media_type == 'movies' else 'tv',
                 "plot": plot
             })
