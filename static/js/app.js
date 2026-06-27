@@ -1,5 +1,5 @@
 // ========== إدارة الإصدارات ==========
-const CURRENT_VERSION = '3.0.4';
+const CURRENT_VERSION = '3.0.5';
 const VERSION_KEY = 'rc-pro-version';
 function clearCachesAndReload() {
     if ('caches' in window) caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
@@ -57,12 +57,12 @@ const toast = document.getElementById('toast');
         for (let i=1; i<=100; i++) episodeSelect.innerHTML += `<option value="${i}">ح ${i}</option>`;
     }
     
-    // إضافة زر ترتيب الأحدث/الأقدم أوتوماتيكياً بدون لمس HTML
+    // إضافة زر ترتيب الأحدث/الأقدم أوتوماتيكياً ونسخ تصميم الفلاتر الأخرى
     if (genreFilter && !document.getElementById('sortFilter')) {
         const sortSelect = document.createElement('select');
         sortSelect.id = 'sortFilter';
+        sortSelect.className = genreFilter.className; // نسخ الكلاسات ليكون متطابقاً تماماً
         sortSelect.innerHTML = '<option value="desc">الأحدث أولاً</option><option value="asc">الأقدم أولاً</option><option value="random">عشوائي</option>';
-        sortSelect.style.marginRight = '10px';
         genreFilter.parentNode.insertBefore(sortSelect, genreFilter.nextSibling);
         sortSelect.addEventListener('change', applyFilters);
     }
@@ -140,6 +140,10 @@ async function loadMoreMovies() {
     if (window.isLoading) return;
     window.isLoading = true;
 
+    // إظهار دائرة التحميل
+    const spinner = document.getElementById('infinite-spinner');
+    if (window.currentPage > 1 && spinner) spinner.style.display = 'block';
+
     const p = window.currentFetchParams;
     let url = p.mode === 'trending' 
         ? `/trending?page=${window.currentPage}&sort=${p.sort}` 
@@ -162,7 +166,7 @@ async function loadMoreMovies() {
                 const ht = document.getElementById('heroTitle'); if(ht) ht.textContent = hero.title;
                 const hp = document.getElementById('heroPlot'); if(hp) hp.textContent = hero.plot||'';
                 const hb = document.getElementById('heroPlayBtn'); if(hb) hb.onclick = () => playMedia(hero.id,hero.type,hero.title);
-                data.shift(); // إزالة بطل الصفحة من الشبكة
+                data.shift(); 
             } else if(heroSection) {
                 heroSection.style.display = 'none';
             }
@@ -180,13 +184,18 @@ async function loadMoreMovies() {
         if(window.currentPage === 1) resultsGrid.innerHTML='<div class="empty-state"><h3>خطأ في الاتصال</h3></div>'; 
     }
     
+    // إخفاء دائرة التحميل
+    if (spinner) spinner.style.display = 'none';
     window.isLoading = false;
 }
 
-// إنشاء حساس التمرير اللانهائي
+// إنشاء حساس التمرير وعلامة التحميل (Spinner)
 const scrollTrigger = document.createElement('div');
 scrollTrigger.id = 'scroll-trigger';
-scrollTrigger.style.height = '10px';
+scrollTrigger.style.width = '100%';
+scrollTrigger.style.padding = '20px 0';
+scrollTrigger.style.textAlign = 'center';
+scrollTrigger.innerHTML = '<div id="infinite-spinner" style="display:none; margin: 0 auto; width:35px; height:35px; border:3px solid rgba(0,229,255,0.1); border-top-color:#00e5ff; border-radius:50%; animation:spin 1s linear infinite;"></div>';
 document.body.appendChild(scrollTrigger);
 
 const observer = new IntersectionObserver((entries) => {
